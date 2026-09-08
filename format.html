@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Export format — Moraine</title>
+<meta name="description" content="The Moraine export format, written down: the folder, every field in moraine.json, the media files, the standalone reader, and the sealed archive. Enough to write your own reader against.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="site">
+    <a class="name" href="./">Moraine</a>
+    <nav>
+        <a href="./">Overview</a>
+        <a href="help.html">Help</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="format.html" aria-current="page">Format</a>
+        <a href="terms.html">Terms</a>
+    </nav>
+</header>
+
+<h1>The export format</h1>
+<p class="updated">Format version 1 · this page last updated 8 September 2026</p>
+
+<p class="lede">Every technical evaluator of a journal app asks the same question:
+what happens to my writing when the developer stops? This page is the answer. It
+describes the export completely enough that someone who has never seen Moraine's
+code could write a program to read it — and the export ships with one, a page that
+shows the whole library in any browser.</p>
+
+<p>Two promises sit behind this page. <strong>Export is never gated</strong>: it works
+during the trial, after it, bought or not, and in the code that rule is a test named
+<code>ExportIsNeverGatedTests</code>, which expires the trial and then asserts that an
+export still writes every entry and every embedding. And <strong>the format is
+versioned conservatively</strong>: the number moves only for a change an older build
+could not read, and the app refuses an archive newer than it understands rather than
+guessing. Everything added since version 1 was added as an optional key, so an export
+taken on the first day still restores today, and today's restores into a build from
+that day, minus what that build had never heard of.</p>
+
+<h2>The folder</h2>
+
+<p><strong>Export everything</strong> writes a folder named after the day:</p>
+
+<pre><code>Moraine Export 2026-09-08/
+  moraine.json      every entry and every journal, as readable JSON
+  index.html        the standalone reader — open it in any browser
+  media/            photographs, recordings, video and sketches as ordinary files</code></pre>
+
+<p>Media is kept as files rather than base64 inside the JSON, because a recording
+that can only be played by the app that wrote it is not much of a backup. A file in
+<code>media/</code> opens in whatever opens that kind of file. The manifest refers to
+each one by its file name, relative to <code>media/</code>.</p>
+
+<p>The manifest has had two other names. An export written when the app was called
+Tarn has <code>tarn.json</code>; one written when it was called Rambling has
+<code>rambling.json</code>. The contents are identical, the app reads all three, and
+a reader of your own should too — an archive written under the first name is no less
+somebody's library than one written yesterday.</p>
+
+<h2>The manifest</h2>
+
+<p><code>moraine.json</code> is one JSON object. Keys are sorted and the file is
+pretty-printed, on purpose: the point of a plain-JSON archive is that a person can
+open it and see their own words. Dates everywhere are ISO 8601 in UTC, with seconds
+(<code>2019-06-14T09:30:00Z</code>).</p>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>formatVersion</code></td><td>integer</td><td>Currently <strong>1</strong>. A reader should refuse anything higher.</td></tr>
+<tr><td><code>exportedAt</code></td><td>date</td><td>When the export was written.</td></tr>
+<tr><td><code>appVersion</code></td><td>string</td><td>The app's marketing version, e.g. <code>1.2</code>.</td></tr>
+<tr><td><code>itemCount</code></td><td>integer</td><td>The length of <code>items</code>. Redundant, and a cheap check that the file is whole.</td></tr>
+<tr><td><code>items</code></td><td>array of entry</td><td>Every entry, oldest first. Described below.</td></tr>
+<tr><td><code>journals</code></td><td>array of journal, optional</td><td>The journals themselves, so a restore brings back the rooms and not only which entries were in them. Absent from archives written before journals carried a look of their own; an entry still names its journal, so a reader without this key loses nothing but colour.</td></tr>
+</table>
+
+<h3>A journal</h3>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>name</code></td><td>string</td><td>The journal's name. Entries refer to journals by name, not by id, so an archive restored into a library that already has a "Work" joins it rather than making a second one.</td></tr>
+<tr><td><code>symbolName</code></td><td>string</td><td>An SF Symbols name, e.g. <code>book.closed</code>.</td></tr>
+<tr><td><code>tintRaw</code></td><td>string</td><td>The accent: one of <code>coral</code>, <code>sage</code>, <code>tide</code>, <code>dusk</code>, <code>clay</code>, <code>slate</code>.</td></tr>
+<tr><td><code>themeRaw</code></td><td>string, optional</td><td>The theme the journal wears — one of <code>drift</code>, <code>foolscap</code>, <code>meridian</code>, <code>harbour</code>, <code>understory</code>, <code>vesper</code>, <code>ledger</code>, <code>kiln</code>, <code>heath</code> — or absent for the app's own look.</td></tr>
+</table>
+
+<h2>An entry</h2>
+
+<p>Every entry is one object in <code>items</code>. A key marked <em>optional</em> is
+simply absent when it has nothing to say, and a reader should treat an absent key as
+<code>null</code>, <code>false</code> or an empty list as the type suggests. A key a
+reader does not recognise should be ignored: that is how every field below that was
+added after version 1 arrived without the version moving.</p>
+
+<h3>Identity and time</h3>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>id</code></td><td>UUID string</td><td>Stable for the life of the entry, across every device and every export. Restoring an archive skips any id already in the library, which is why restoring the same archive twice changes nothing. An entry imported from Day One keeps Day One's own identifier, reformatted as a UUID; one from Apple Journal has a UUID derived from its file name.</td></tr>
+<tr><td><code>createdAt</code></td><td>date</td><td>When the entry is dated — the capture moment, or the date the person corrected it to.</td></tr>
+<tr><td><code>modifiedAt</code></td><td>date</td><td>Last edit.</td></tr>
+<tr><td><code>kind</code></td><td>string</td><td>What the entry is: <code>note</code>, <code>journal</code>, <code>link</code>, <code>audio</code> (a voice recording), <code>idea</code>, <code>image</code> (an entry that <em>is</em> a picture), <code>sketch</code> (one that <em>is</em> a drawing).</td></tr>
+<tr><td><code>status</code></td><td>string</td><td>Where the entry is in the on-device pipeline: <code>captured</code> (raw, waiting), <code>enriching</code>, <code>enriched</code> (titled, summarised, tagged, embedded) or <code>failed</code> (gave up; still browsable). A reader of your own can ignore this.</td></tr>
+<tr><td><code>source</code></td><td>string</td><td>The door it came through: <code>app</code>, <code>shareExtension</code>, <code>safariExtension</code>, <code>intent</code> (Siri or a Shortcut), <code>drop</code> (dragged onto the Mac), <code>imported</code> (Day One or Apple Journal). A note with source <code>imported</code> is an import's receipt — the record of what came across and what did not.</td></tr>
+<tr><td><code>journalName</code></td><td>string, optional</td><td>The journal it belongs to, by name. Absent means the default journal.</td></tr>
+</table>
+
+<h3>Words</h3>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>title</code></td><td>string, optional</td><td>Generated on the device, or typed by the person.</td></tr>
+<tr><td><code>titleUserEdited</code></td><td>boolean</td><td>The person wrote or edited the title. The app never overwrites it again.</td></tr>
+<tr><td><code>text</code></td><td>string, optional</td><td>The entry itself, in <strong>Markdown</strong>. Headings, lists, quotes, code blocks, emphasis and links are what the app renders; anything else is shown as written.</td></tr>
+<tr><td><code>url</code></td><td>string, optional</td><td>For a link: the address.</td></tr>
+<tr><td><code>articleText</code></td><td>string, optional</td><td>For a link: the readable text of the page, saved at capture.</td></tr>
+<tr><td><code>transcript</code></td><td>string, optional</td><td>For a recording: the on-device transcript.</td></tr>
+<tr><td><code>summary</code></td><td>string, optional</td><td>One or two sentences, generated on the device.</td></tr>
+<tr><td><code>tags</code></td><td>array of string</td><td>Display names, in the entry's order. Empty when there are none.</td></tr>
+<tr><td><code>tagsUserEdited</code></td><td>boolean, optional</td><td>The person curated the tags; absent in older archives and read as false.</td></tr>
+<tr><td><code>isFavorite</code></td><td>boolean</td><td>Starred.</td></tr>
+</table>
+
+<h3>Where and when it was written</h3>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>latitude</code>, <code>longitude</code></td><td>number, optional</td><td>WGS 84 degrees.</td></tr>
+<tr><td><code>placeName</code></td><td>string, optional</td><td>"Norwood, Adelaide" — reverse-geocoded, chosen from a search, or carried across from an import.</td></tr>
+<tr><td><code>weatherSummary</code></td><td>string, optional</td><td>"18° Partly Cloudy", as a single string.</td></tr>
+<tr><td><code>weatherFromWeatherKit</code></td><td>boolean, optional</td><td>Whether the weather came from Apple Weather rather than from an import. It decides only whether the entry carries Apple's attribution; absent reads as unknown, which claims nothing.</td></tr>
+<tr><td><code>deviceName</code></td><td>string, optional</td><td>The device it was captured on.</td></tr>
+</table>
+
+<h3>Things the app noticed</h3>
+
+<p>All optional, all generated, all ignorable by a reader of your own. They are
+carried so that a restore is a restore rather than a re-run.</p>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>detectedEventDate</code>, <code>detectedEventTitle</code>, <code>detectedEventHasTime</code></td><td>date, string, boolean</td><td>A plan the app spotted in the words. Only ever a suggestion.</td></tr>
+<tr><td><code>calendarEventIdentifier</code></td><td>string, optional</td><td>Set once the person handed that plan to Apple Calendar.</td></tr>
+<tr><td><code>planDismissed</code></td><td>boolean</td><td>The person said no; never suggest it again.</td></tr>
+<tr><td><code>mood</code></td><td>string, optional</td><td>How the entry reads, if the person switched that on: <code>joyful</code>, <code>excited</code>, <code>grateful</code>, <code>proud</code>, <code>happy</code>, <code>content</code>, <code>calm</code>, <code>hopeful</code>, <code>relieved</code>, <code>neutral</code>, <code>surprised</code>, <code>annoyed</code>, <code>anxious</code>, <code>sad</code>, <code>frustrated</code>, <code>tired</code>, <code>lonely</code>, <code>angry</code>, <code>overwhelmed</code>, <code>miserable</code>, <code>scared</code>.</td></tr>
+<tr><td><code>moodUserSet</code></td><td>boolean, optional</td><td>The person set or corrected it themselves.</td></tr>
+<tr><td><code>mediaTitle</code>, <code>mediaSubtitle</code>, <code>mediaSynopsis</code>, <code>mediaLinkURL</code>, <code>mediaArtworkURL</code></td><td>string, optional</td><td>A film, book, show, podcast, album or app the entry names, resolved to a link if the person switched that on.</td></tr>
+<tr><td><code>mediaKindRaw</code></td><td>string, optional</td><td>One of <code>movie</code>, <code>tvShow</code>, <code>book</code>, <code>podcast</code>, <code>music</code>, <code>app</code>.</td></tr>
+<tr><td><code>mediaDismissed</code></td><td>boolean</td><td>The person removed the link; never look this entry up again.</td></tr>
+<tr><td><code>mediaUserSet</code></td><td>boolean, optional</td><td>The person chose the work themselves after the lookup got it wrong.</td></tr>
+</table>
+
+<h3>Media</h3>
+
+<p>Each of these names a file in <code>media/</code>. The names the app writes are
+the entry's id plus a suffix, so a folder listing reads back to its entries without
+the manifest.</p>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>audioFile</code></td><td>string, optional</td><td>The voice recording: <code>&lt;id&gt;.m4a</code>. One per entry.</td></tr>
+<tr><td><code>imageFile</code></td><td>string, optional</td><td>The single image a share-sheet or Safari clip arrived with: <code>&lt;id&gt;.png</code> or <code>.jpg</code>, or <code>.data</code> when the bytes are neither.</td></tr>
+<tr><td><code>photos</code></td><td>array, optional</td><td>Attached photographs, in order. Each is <code>{ "file": "&lt;id&gt;-photo-0.jpg", "takenAt": date }</code>; <code>file</code> is required and <code>takenAt</code> — when the camera says it was taken — is optional. Photographs are stored re-encoded to at most 2048 px on the long edge.</td></tr>
+<tr><td><code>videos</code></td><td>array, optional</td><td>Attached video, in order, in its original container: <code>{ "file": "&lt;id&gt;-video-0.mov", "takenAt": date, "duration": seconds }</code>, the last two optional. Video is never re-encoded.</td></tr>
+<tr><td><code>drawings</code></td><td>array, optional</td><td>Sketches, in order: <code>{ "file": "&lt;id&gt;-drawing-0.png", "strokeFile": "&lt;id&gt;-drawing-0.strokes" }</code>. The PNG is the part that means anything outside Moraine and is required; <code>strokeFile</code> is PencilKit's own stroke data, which keeps the sketch editable in the app, and is optional.</td></tr>
+<tr><td><code>photoFiles</code></td><td>array of string, optional</td><td>The shape <code>photos</code> had in the first release, before capture dates were kept. Read, never written; a reader should accept either.</td></tr>
+</table>
+
+<p>The objects inside <code>photos</code>, <code>videos</code> and <code>drawings</code>
+share three keys and add one each:</p>
+
+<table>
+<tr><th>Key</th><th>On</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>file</code></td><td>all three</td><td>string</td><td>The file name in <code>media/</code>. Required.</td></tr>
+<tr><td><code>takenAt</code></td><td>photos, videos</td><td>date, optional</td><td>When the camera took it, read from the original at the moment it was attached.</td></tr>
+<tr><td><code>duration</code></td><td>videos</td><td>number, optional</td><td>Seconds. Carried so that a reader need not decode the file to find out.</td></tr>
+<tr><td><code>strokeFile</code></td><td>drawings</td><td>string, optional</td><td>PencilKit's stroke data, with a <code>.strokes</code> extension. Nothing but Moraine reads it; the PNG beside it opens anywhere.</td></tr>
+</table>
+
+<h3>The index</h3>
+
+<table>
+<tr><th>Key</th><th>Type</th><th>Meaning</th></tr>
+<tr><td><code>embedding</code></td><td>string, optional</td><td>The entry's sentence embedding, so a restored library can search by meaning immediately rather than after every entry is reprocessed: base64 of an array of little-endian 32-bit floats, unit-normalised. This is the one field on the page that is for the machine rather than the person, and a reader of your own can ignore it.</td></tr>
+<tr><td><code>embeddingVersion</code></td><td>integer</td><td>Which model produced it. <code>1</code> is Apple's on-device <code>NLContextualEmbedding</code> for English, 512 dimensions. <code>0</code> means there is none.</td></tr>
+</table>
+
+<h2>A worked example</h2>
+
+<p>An export of a library with one entry in it — a journal entry with a photograph,
+two tags, a place and the weather — exactly as the app wrote it. The embedding is
+shortened to eight floats here; a real one is 512.</p>
+
+<pre><code>Moraine Export 2026-09-08/
+  index.html
+  moraine.json
+  media/
+    6B1F2C4E-9A3D-4E2B-8C7A-1D5E6F7A8B9C-photo-0.png</code></pre>
+
+<pre><code>{
+  "appVersion" : "1.1",
+  "exportedAt" : "2026-09-08T10:28:58Z",
+  "formatVersion" : 1,
+  "itemCount" : 1,
+  "items" : [
+    {
+      "createdAt" : "2019-06-14T09:30:00Z",
+      "detectedEventHasTime" : false,
+      "deviceName" : "Rashid's iPhone",
+      "embedding" : "AAAAAM3MzD3NzEw+mpmZPs3MzD4AAAA\/mpkZPzMzMz8=",
+      "embeddingVersion" : 1,
+      "id" : "6B1F2C4E-9A3D-4E2B-8C7A-1D5E6F7A8B9C",
+      "isFavorite" : true,
+      "journalName" : "Travel",
+      "kind" : "journal",
+      "latitude" : -34.9805,
+      "longitude" : 138.5119,
+      "mediaDismissed" : false,
+      "modifiedAt" : "2019-06-14T09:30:00Z",
+      "photos" : [
+        {
+          "file" : "6B1F2C4E-9A3D-4E2B-8C7A-1D5E6F7A8B9C-photo-0.png",
+          "takenAt" : "2019-06-14T09:31:00Z"
+        }
+      ],
+      "placeName" : "Glenelg",
+      "planDismissed" : false,
+      "source" : "app",
+      "status" : "enriched",
+      "summary" : "A walk, and a decision deferred.",
+      "tags" : [
+        "houses",
+        "walking"
+      ],
+      "tagsUserEdited" : false,
+      "text" : "We walked the **long** way round and talked about Glenelg.\n\nNothing was decided.",
+      "title" : "The argument about moving house",
+      "titleUserEdited" : false,
+      "weatherFromWeatherKit" : true,
+      "weatherSummary" : "18° Partly Cloudy"
+    }
+  ],
+  "journals" : [
+    {
+      "name" : "Travel",
+      "symbolName" : "book.closed",
+      "tintRaw" : "coral"
+    }
+  ]
+}</code></pre>
+
+<p>Note what is absent rather than null — <code>url</code>, <code>transcript</code>,
+<code>mood</code>, <code>themeRaw</code> — and that the JSON encoder escapes the
+slash in the base64. Both are ordinary JSON and any parser handles them.</p>
+
+<h2>The standalone reader</h2>
+
+<p><code>index.html</code> is written by the export, from the same manifest, every
+time. Open it in any browser and the whole library is there: entries under month
+headings with a contents by year, dates, places, weather, tags, photographs inline,
+video and recordings with a player, transcripts and saved article text folded under a
+heading. It contains no script, and fetches no stylesheet, font or image from
+anywhere: everything it shows is read from <code>media/</code> beside it, and the one
+address on the page is a link to this document. Move the folder whole and it works;
+move the page alone and the words still read, with a caption where each picture was.</p>
+
+<p>It is generated rather than maintained. A reader kept beside a format drifts from
+it, and a reader that drifts is worse than none — so in the code, the test that
+guards it decodes <code>moraine.json</code> back off disk and asserts that regenerating
+the page from that produces the file byte for byte.</p>
+
+<p>Photographs are referenced, not inlined. That was measured rather than assumed:
+base64 costs a third again over the bytes, so a library carrying 1.5 GB of
+photographs would be a 2 GB HTML file, which no browser opens well. The folder is the
+artifact.</p>
+
+<h2>The sealed archive</h2>
+
+<p><strong>Export encrypted…</strong> writes the same folder as one file with the
+extension <code>.morainebackup</code>, sealed with a password. There is no recovery
+and no copy of the password anywhere: an archive Moraine could open on your behalf is
+one somebody else could open with your device.</p>
+
+<p>The file is two layers. The inner one packs the folder into a single stream; the
+outer one encrypts that stream in chunks and begins with the eight bytes
+<code>MORAENC1</code>. Both are small enough to describe fully.</p>
+
+<h3>Packing</h3>
+
+<p>Files, one after another, to the end of the stream. No index, no compression —
+what it packs is JSON, which is small, plus photographs, audio and video, which are
+already compressed. All integers are big-endian.</p>
+
+<pre><code>repeated to end of stream:
+  pathLength   UInt32
+  path         UTF-8, relative to the folder root (e.g. "moraine.json", "media/….png")
+  dataLength   UInt64
+  data         the file's bytes</code></pre>
+
+<p>A reader must refuse any path that would climb above the folder it is unpacking
+into. An archive is a file from somewhere else, and a restore that writes wherever
+the file asks is how a backup becomes an attack.</p>
+
+<h3>Sealing</h3>
+
+<pre><code>magic        8 bytes   "MORAENC1"
+salt         16 bytes  random
+iterations   UInt32    big-endian; 210,000 as written today
+repeated to end of file:
+  length     UInt32    big-endian, of the sealed chunk that follows
+  sealed     AES-256-GCM, combined form: 12-byte nonce ‖ ciphertext ‖ 16-byte tag</code></pre>
+
+<p>The key is PBKDF2-HMAC-SHA256 over the password's UTF-8 bytes with the salt and
+iteration count from the header, 32 bytes out. The iteration count is stored in the
+file so that raising it later does not orphan existing archives. The plaintext is the
+packed stream above, cut into 4 MB chunks, each sealed separately so that memory
+stays flat however large the library is. Each chunk's index — a big-endian UInt64
+starting at 0 — is passed as the additional authenticated data, so a file whose chunks
+have been reordered, duplicated or truncated fails to open rather than restoring a
+plausible-looking subset of somebody's life.</p>
+
+<p>An archive sealed when the app was called Tarn begins <code>TARNENC1</code>. The
+bytes after the magic are identical and the app opens both; a reader of your own
+should accept either. A wrong password and a damaged file give the same error on
+purpose: telling somebody which it was tells an attacker the same thing.</p>
+
+<h2>Version history</h2>
+
+<table>
+<tr><th>Version</th><th>What it means</th></tr>
+<tr><td><strong>1</strong></td><td>The format as first shipped, August 2026, and still the current number. Added since, all as optional keys so the version did not move: <code>photos</code> as objects with capture dates (replacing <code>photoFiles</code>), <code>videos</code>, <code>drawings</code>, <code>tagsUserEdited</code>, <code>mood</code> and <code>moodUserSet</code>, <code>mediaUserSet</code>, <code>weatherFromWeatherKit</code>, <code>journals</code> on the manifest, and <code>index.html</code> beside it.</td></tr>
+</table>
+
+<p>The number will move when a change lands that an older build could not read
+correctly — a key whose absence could no longer be treated as "nothing to say", or a
+change to the meaning of one already there. When it does, this page will say what
+changed and how to read both.</p>
+
+<h2>Reading it yourself</h2>
+
+<p>The rules, gathered in one place, for anyone writing a reader:</p>
+
+<ul>
+    <li>Look for <code>moraine.json</code>, then <code>rambling.json</code>, then <code>tarn.json</code>. Refuse a <code>formatVersion</code> higher than the one you know.</li>
+    <li>Ignore keys you do not recognise. Treat an absent optional key as null, false or empty.</li>
+    <li>Accept <code>photos</code> or <code>photoFiles</code>; prefer <code>photos</code> when both are present.</li>
+    <li>Resolve every media path relative to <code>media/</code>, and expect that a file may be missing: the manifest describes what was exported, and folders get copied badly.</li>
+    <li>Render <code>text</code> as Markdown, or show it as written — the words are the entry; the formatting is a courtesy.</li>
+    <li>Ignore <code>embedding</code>, <code>status</code> and the detected-plan fields unless you are rebuilding the app.</li>
+</ul>
+
+<p>If this page and the app ever disagree, that is a bug in one of them and worth an
+<a href="mailto:chaser_90ragwort@icloud.com">email</a>. In the code, a test holds the
+page to the archive: every field the app writes, and every value an entry can carry,
+must be named here, so the two cannot drift without a build going red.</p>
+
+<footer class="site">
+    <p>Moraine for iPhone, iPad and Mac.
+    <a href="./">Overview</a> ·
+    <a href="help.html">Help</a> ·
+    <a href="privacy.html">Privacy</a> ·
+    <a href="terms.html">Terms</a></p>
+</footer>
+
+</div>
+</body>
+</html>

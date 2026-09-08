@@ -16,6 +16,7 @@
         <a href="./">Overview</a>
         <a href="help.html" aria-current="page">Help</a>
         <a href="privacy.html">Privacy</a>
+        <a href="format.html">Format</a>
         <a href="terms.html">Terms</a>
     </nav>
 </header>
@@ -35,7 +36,9 @@ memo. Beyond that:</p>
         Enable it once in Safari → Settings → Extensions.</li>
     <li><strong>Siri</strong> — "Add a note to Moraine saying pick up oat milk", or
         "Capture in Moraine" for a two-step version.</li>
-    <li><strong>Action Button / widget / Mac menu bar</strong> — one tap to a blank note or a recording.</li>
+    <li><strong>Action Button / widget / Mac menu bar</strong> — one tap to a blank note or a recording.
+        Two more widgets, <strong>Writing activity</strong> and <strong>Entries by month</strong>,
+        show how much you have written — never what.</li>
 </ul>
 
 <p>Markdown works in the editor: <code>**bold**</code>, <code># headings</code>,
@@ -63,6 +66,43 @@ purchase; keyword search always works.</p>
 anniversary, or something you wrote years ago that is close in meaning to what you
 have been writing lately. Dismissing it hides it for the day.</p>
 
+<h2>Editing an entry</h2>
+
+<p>Open an entry and choose <strong>Edit</strong>. The title, the writing, the date,
+the place and the tags are all yours to change.</p>
+
+<ul>
+    <li><strong>Date and place</strong> — an entry keeps the moment it was captured
+        until you say otherwise. Last weekend written up on a Tuesday can be moved
+        back to the weekend. A place is picked from a search or from where you are
+        now, never typed, so it always lands on the Map; an entry with a place shows a
+        small map, with a hand-off to Apple Maps. Moving the place drops a weather
+        reading taken at the old one; moving the date keeps it.</li>
+    <li><strong>Tags</strong> — remove any, add your own. Once you have edited an
+        entry's tags, Moraine stops re-tagging that entry, so nothing you removed
+        comes back.</li>
+    <li><strong>Title</strong> — leave it empty and Moraine names the entry again.</li>
+</ul>
+
+<h3>Writing</h3>
+
+<ul>
+    <li><strong>Focus</strong> — in the toolbar of a new entry. The line you are
+        writing stays at the same height on the screen and every other paragraph
+        dims, so the page moves under your eye instead of your eye down the page.
+        Moraine remembers whether you left it on.</li>
+    <li><strong>Count words</strong> — in the same toolbar, when you ask. The
+        count is never shown while you write: a running number turns an entry into
+        a target.</li>
+    <li><strong>Line spacing and line width</strong> — Settings › Appearance ›
+        Reading. Tight to Loose, and how wide a line may run on an iPad or a Mac.
+        Both apply while reading and while writing.</li>
+    <li><strong>Markdown, not rich text</strong> — on purpose. <code>**bold**</code>,
+        <code># headings</code> and <code>- lists</code> work; there is no
+        formatting toolbar and there will not be one. What you write stays plain
+        text that any app can open, which is the whole point of the export.</li>
+</ul>
+
 <h2>Journals</h2>
 
 <p>Journals keep separate things separate — Work, Travel, whatever you like. Make
@@ -76,6 +116,18 @@ them in Settings → Journals.</p>
     <li>Captures from outside the app — share sheet, Siri, widget, Safari — can't know which journal you were looking at, so they use the one you pick under "Captures from outside".</li>
 </ul>
 
+<h3>Themes</h3>
+
+<p>A journal can wear a <strong>theme</strong>: one complete look — accent, paper and
+typeface — that the app takes on while you are inside that journal, so Work and
+Travel are different rooms rather than the same room with a different dot. Pick
+one in Settings → Journals → the journal → <strong>Theme</strong>. There are nine;
+<strong>App theme</strong> means none, and no journal has one until you choose it.</p>
+
+<p>It applies only while that journal is selected. <strong>All Entries</strong>,
+the Journals list and Settings keep the app's own look, and light or dark stays
+wherever you set it — a theme has both.</p>
+
 <h2>Coming from Day One</h2>
 
 <ol>
@@ -87,9 +139,11 @@ them in Settings → Journals.</p>
 <p>Entries arrive with their dates, tags, places, weather, favourites, photos, video and
 one voice memo each — an entry that held two keeps the first.
 If the export is named after a journal, Moraine offers to keep it as its own journal.
-Importing the same export twice is harmless — entries already there are skipped.
-Nothing is dropped quietly: if something can't come across, the result says so and
-counts it.</p>
+Nothing is dropped quietly: every import leaves a receipt in your library — an entry
+that says how many came across and names, one by one, any file the export mentioned
+but didn't contain, with the date and first words of the entry it belonged to. It is
+searchable and it stays. If you export again from Day One and import that folder,
+entries already here are left alone and only the gaps the receipt named are filled.</p>
 
 <h2>Coming from Apple Journal</h2>
 
@@ -117,8 +171,13 @@ progress, and can be paused.</p>
 <h2>Backups and export</h2>
 
 <p>Settings → Backup → <strong>Export everything</strong> writes a folder of plain
-JSON with your photos and recordings beside it as ordinary files. You can read it
-without Moraine, and keep it anywhere.</p>
+JSON with your photos and recordings beside it as ordinary files, and an
+<code>index.html</code> that shows the whole library — entries, dates, places,
+photographs, recordings — in any browser, with no app and no network. Open it on a
+machine that has never had Moraine installed and it works, because it reads only the
+files beside it. The folder's layout and every field in it are written down on the
+<a href="format.html">Format</a> page, so that someone else could write a reader
+against it.</p>
 
 <p><strong>Export always works</strong> — during the trial, after it, bought or not.
 <strong>Restore from an export</strong> adds back anything missing and leaves what
@@ -128,6 +187,26 @@ you already have alone, so restoring the same export twice is harmless.</p>
     <p>Do this before you change devices, and before any big import. Moraine has no
     copy of your library, so nobody can recover it for you.</p>
 </div>
+
+<h3>Snapshot to Files</h3>
+
+<p><strong>Snapshot to Files</strong> is the same export written straight to this
+device with no dialog: in Files under On My iPhone › Moraine › Snapshots, or the
+app's Documents folder on a Mac. The last three are kept; a fourth replaces the
+oldest. Settings says how long it has been since the last one, and starts to nag
+gently after a month. It is the copy that depends on neither iCloud nor this app
+nor a password.</p>
+
+<h3>If two devices edit the same entry</h3>
+
+<p>Edit the same entry on your phone and your Mac while they are apart, and iCloud
+has to pick one set of words when they meet. Moraine never lets that choice lose
+anything: on the device whose words were replaced, they come back as a second
+entry beside the first, titled <em>Conflicted copy</em> and tagged
+<code>#conflict</code>, in the same journal on the same day. Nothing is merged and
+nothing is guessed — you keep the one you want, or fold them together by hand.
+Settings › iCloud sync also lists every entry that has changed on this device and
+not yet reached iCloud, so you can see what is at stake before it syncs.</p>
 
 <h3>Encrypted export</h3>
 
@@ -166,6 +245,16 @@ journal, the year and the tags.</p>
 
 <p>Print it from the share sheet, or from Preview on a Mac: the system does that
 better than an app can.</p>
+
+<h2>Appearance</h2>
+
+<p>Settings → <strong>Appearance</strong> holds the app's own look: an accent
+colour, light or dark, a <strong>paper</strong> (the ground everything sits on), a
+<strong>typeface</strong> and a <strong>text size</strong>. Every accent has been
+checked for legibility on every paper, so there is no combination to avoid. Text
+size is a step up from whatever the system is already set to, so it never undoes a
+size you rely on. A journal's theme overrides all of this while you are in that
+journal.</p>
 
 <h2>Sync</h2>
 
@@ -231,6 +320,7 @@ you are on saves a round trip.</p>
     <p>Moraine for iPhone, iPad and Mac.
     <a href="./">Overview</a> ·
     <a href="privacy.html">Privacy</a> ·
+    <a href="format.html">Format</a> ·
     <a href="terms.html">Terms</a></p>
 </footer>
 
